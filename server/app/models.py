@@ -1,24 +1,28 @@
 # models.py
-from sqlalchemy import Column, Integer, String
-# We importeren de 'Base' class uit ons database.py bestand.
+from sqlalchemy import Column, Integer, String, VARCHAR, ForeignKey, NUMERIC, DATE, DATETIME
+from sqlalchemy.orm import relationship
 from .database import Base
 
-# Dit is het SQLAlchemy ORM (Object-Relational Mapping) model.
-# Door te erven van Base, weet SQLAlchemy dat dit model
-# gekoppeld moet worden aan een databasetabel.
-class User(Base):
-    # De naam van de tabel in de database.
+class BaseModel(Base):
+    __abstract__ = True
+    id = Column(Integer, primary_key=True, index=True)
+
+class User(BaseModel):
     __tablename__ = "users"
 
-    # De kolommen van de tabel.
-    # Column definieert een kolom met een bepaald type (Integer, String, etc.).
-    # primary_key=True: Dit is de unieke sleutel van de tabel.
-    # index=True: Creëert een database-index op deze kolom. Dit maakt
-    #             zoekopdrachten op dit veld (zoals zoeken op e-mail) veel sneller.
-    # unique=True: Zorgt ervoor dat elke waarde in deze kolom uniek moet zijn.
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, index=True)
-    email = Column(String, unique=True, index=True)
-    # In een echte applicatie wil je hier nooit platte tekst opslaan!
-    # Gebruik een bibliotheek als 'passlib' om het wachtwoord te hashen.
-    hashed_password = Column(String)
+    name = Column(VARCHAR(255))
+    email = Column(VARCHAR(255), unique=True, index=True)
+    hashed_password = Column(VARCHAR(255))
+
+    lists = relationship("List", back_populates="user")
+
+class List(BaseModel):
+    __tablename__ = "lists"
+
+    user_id = Column(Integer, ForeignKey("users.id")) # Foreign Key naar de users tabel
+    list_name = Column(VARCHAR(255))
+
+    # Relatie naar User: Een List behoort tot één User
+    # 'User' is de naam van de class
+    # 'back_populates' linkt naar de 'lists' relatie in het User model
+    user = relationship("User", back_populates="lists")
