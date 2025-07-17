@@ -15,7 +15,7 @@ def get_all_users(db: Session = Depends(get_db)):
     return db.query(models.User).all()
 
 # -- READ (één) --
-@router.get("/users/{user_id}", response_model=schemas.User)
+@router.get("/{user_id}", response_model=schemas.User)
 def read_user(user_id: int, db: Session = Depends(get_db)):
     # Zoek naar één specifieke gebruiker op basis van zijn primary key (ID).
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -24,7 +24,7 @@ def read_user(user_id: int, db: Session = Depends(get_db)):
     return db_user
 
 # -- DELETE --
-@router.delete("/users/{user_id}", response_model=dict)
+@router.delete("/{user_id}", response_model=dict)
 def delete_user(user_id: int, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.id == user_id).first()
     if db_user is None:
@@ -37,17 +37,17 @@ def delete_user(user_id: int, db: Session = Depends(get_db)):
     return {"ok": True}
 
 @router.post("/") # Wordt uiteindelijke pad: /users/
-def create_user(user: schemas.UserCreate, db: Session = Depends(get_db)):
+def create_user(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     # Controleer of de gebruiker al bestaat.
-    db_user_check = db.query(models.User).filter(models.User.email == user.email).first()
+    db_user_check = db.query(models.User).filter(models.User.email == user_in.email).first()
     if db_user_check:
         raise HTTPException(status_code=400, detail="E-mailadres is al in gebruik")
     
     # Hash het wachtwoord
-    hashed_password = security.get_password_hash(user.password)
+    hashed_password = security.get_password_hash(user_in.password)
 
     # Maak een SQLAlchemy model-instantie aan met de data uit het schema.
-    db_user = models.User(name=user.name, email=user.email, hashed_password=hashed_password)
+    db_user = models.User(name=user_in.name, email=user_in.email, hashed_password=hashed_password)
     # Voeg het nieuwe object toe aan de sessie (nog niet in de DB).
     db.add(db_user)
     # Commit de transactie, nu wordt het daadwerkelijk naar de DB geschreven.
