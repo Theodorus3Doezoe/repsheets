@@ -12,6 +12,8 @@ router = APIRouter(
     tags=["Authentication"]          # Het naambordje voor de API-documentatie
 )
 
+
+
 @router.post("/login")
 def login_user(user: schemas.UserLogin, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.email == user.email).first()
