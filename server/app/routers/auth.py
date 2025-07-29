@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from ..database import get_db
+from ..dependancies import get_db
 from .. import schemas, models, security
 from jose import jwt
 from .. import config

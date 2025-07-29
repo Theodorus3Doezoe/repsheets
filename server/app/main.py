@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .database import engine, Base
-from .routers import users, auth, scraping
+from .routers import users, auth, lists
 from . import models
 
 # Deze regel is belangrijk! Het zorgt ervoor dat SQLAlchemy alle tabellen
@@ -26,4 +26,4 @@ app.add_middleware(
 
 app.include_router(users.router)
 app.include_router(auth.router)
-app.include_router(scraping.router)
+app.include_router(lists.router) 

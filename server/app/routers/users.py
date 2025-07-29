@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from ..database import get_db
+from ..dependancies import get_db, get_current_user
 from .. import schemas, models, security
 
 # Maak de router (de 'afdeling') aan
@@ -9,19 +9,12 @@ router = APIRouter(
     tags=["Users"]          # Het naambordje voor de API-documentatie
 )
 
-@router.get("/") # Wordt uiteindelijke pad: /users/
-def get_all_users(db: Session = Depends(get_db)):
-    # Logica om alle gebruikers op te halen...
-    return db.query(models.User).all()
-
-# -- READ (één) --
-@router.get("/{user_id}", response_model=schemas.User)
-def read_user(user_id: int, db: Session = Depends(get_db)):
-    # Zoek naar één specifieke gebruiker op basis van zijn primary key (ID).
-    db_user = db.query(models.User).filter(models.User.id == user_id).first()
-    if db_user is None:
-        raise HTTPException(status_code=404, detail="Gebruiker niet gevonden")
-    return db_user
+@router.get("/me", response_model=schemas.UserResponse) # Gebruik een Pydantic schema voor de response
+def read_users_me(current_user: models.User = Depends(get_current_user)):
+    """
+    Geeft de gegevens van de momenteel ingelogde gebruiker terug.
+    """
+    return current_user
 
 # -- DELETE --
 @router.delete("/{user_id}", response_model=dict)
@@ -57,3 +50,4 @@ def create_user(user_in: schemas.UserCreate, db: Session = Depends(get_db)):
     # Geef het SQLAlchemy-object terug. FastAPI en Pydantic (dankzij from_attributes)
     # zorgen voor de correcte omzetting naar JSON.
     return db_user
+
