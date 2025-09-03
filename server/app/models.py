@@ -50,11 +50,13 @@ class Sheet(BaseModel):
     parent_list = relationship("List", back_populates="sheets") # Gecorrigeerd
     products = relationship("Product", secondary="list_items", back_populates="sheets") 
 
+from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
+
 class Item(BaseModel):
     __tablename__ = "list_items"
-
-    sheet_id = Column(Integer, ForeignKey("list_sheets.id"), primary_key=True)
-    product_id = Column(Integer, ForeignKey("products.id"), primary_key=True) 
+    
+    sheet_id = Column(Integer, ForeignKey("list_sheets.id"))
+    product_id = Column(Integer, ForeignKey("products.id")) 
     item_name = Column(String(255))
 
 class Product(BaseModel):

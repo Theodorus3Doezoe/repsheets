@@ -58,7 +58,7 @@ def get_user_lists(
 @router.post("/sheets/{sheet_id}/products", status_code=status.HTTP_201_CREATED)
 def add_product_to_sheet(
     sheet_id: int,
-    url_data: schemas.Url,
+    url_data: schemas.AddItem,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -94,12 +94,81 @@ def add_product_to_sheet(
 
     # 3. KOPPEL HET PRODUCT AAN DE SHEET
     # Maak een nieuwe koppeling in de 'list_items' tabel
+    item = db.query(models.Item).filter(models.Item.product_id == product.id).first()
+
+    if item:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"message": "Product staat al in je lijst", "item_name": item.item_name}
+        )
+
     new_item = models.Item(
         sheet_id=sheet.id,
-        product_id=product.id
+        product_id=product.id,
+        item_name=url_data.item_name
         # Je kunt hier later nog andere velden toevoegen, zoals 'item_name'
     )
     db.add(new_item)
     db.commit()
 
     return {"message": "Product succesvol toegevoegd aan sheet", "product_id": product.id}
+
+# Sheet naam aanpassen
+
+@router.patch("/sheets/{sheet_id}")
+def change_sheet_name(
+    sheet_id: int,
+    new_name: schemas.SheetUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    
+     # 1. Controleer of de sheet bestaat en of de gebruiker de eigenaar is
+    sheet = db.query(models.Sheet).filter(models.Sheet.id == sheet_id).first()
+    if not sheet:
+        raise HTTPException(status_code=404, detail="Sheet not found")
+    
+    if sheet.parent_list.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized to access this sheet")
+
+    sheet.sheet_name = new_name.sheet_name
+
+    db.commit()
+    db.refresh(sheet)
+    
+    return {"message": "Sheet naam succesvol verandert"}
+
+#Product naam aanpassen
+@router.patch("/sheets/{sheet_id}/products/{product_id}")
+def change_item_name(
+    sheet_id: int,
+    product_id: int,
+    item_data: schemas.ItemUpdate, # Gebruik je nieuwe schema
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)   
+):
+    item = db.query(models.Item).filter(models.Item.sheet_id == sheet_id, models.Item.product_id == product_id).first()
+
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Product not found in this sheet."
+        )
+
+    sheet_to_check = db.query(models.Sheet).filter(models.Sheet.id == item.sheet_id).first()
+    
+    # Controleer of de sheet wel bestaat en of de eigenaar klopt
+    if not sheet_to_check or sheet_to_check.parent_list.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to modify this item."
+        )
+
+    # 3. Voer de update uit
+    if item_data.item_name is not None:
+        item.item_name = item_data.item_name
+    
+    db.commit()
+    db.refresh(item)
+    return item
+

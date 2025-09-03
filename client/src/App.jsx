@@ -1,8 +1,12 @@
 import React from 'react'
-import Links from './Links'
+import Login from './Login'
+import { Routes, Route } from 'react-router-dom';
+
 
 export default function App() {
   return (
-    <Links></Links>
+    <Routes>
+      <Route path="/login" element={<Login/>}/>
+    </Routes>
   )
 }

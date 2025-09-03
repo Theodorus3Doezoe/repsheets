@@ -1,5 +1,6 @@
 # schemas.py
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from typing import Optional # Zorg dat Optional geïmporteerd is
 
 # Basis-attributen die gedeeld worden
 class UserBase(BaseModel):
@@ -22,12 +23,7 @@ class UserResponse(UserBase):
     class Config:
         from_attributes = True # Vroeger orm_mode = True
 
-
-class Url(BaseModel):
-    url: str
-
 # Sheets schemas
-
 # Voor het tonen van een sheet (tabblad)
 class Sheet(BaseModel):
     id: int
@@ -36,6 +32,12 @@ class Sheet(BaseModel):
 
     class Config:
         from_attributes = True
+
+class SheetUpdate(BaseModel):
+    sheet_name: str = Field(..., min_length=1, max_length=20)
+
+class ItemUpdate(BaseModel):
+    item_name: str = Field(..., min_length=1, max_length=20)
 
 # Voor het maken van een nieuwe lijst (spreadsheet)
 class ListCreate(BaseModel):
@@ -49,3 +51,7 @@ class List(ListCreate):
 
     class Config:
         from_attributes = True
+
+class AddItem(BaseModel):
+    url: str
+    item_name: Optional[str] = None
