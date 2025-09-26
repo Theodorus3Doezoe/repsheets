@@ -11,9 +11,6 @@ router = APIRouter(
 
 @router.get("/me", response_model=schemas.UserResponse) # Gebruik een Pydantic schema voor de response
 def read_users_me(current_user: models.User = Depends(get_current_user)):
-    """
-    Geeft de gegevens van de momenteel ingelogde gebruiker terug.
-    """
     return current_user
 
 # -- DELETE --
